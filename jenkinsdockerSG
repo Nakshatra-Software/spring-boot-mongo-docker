@@ -1,0 +1,36 @@
+
+node {
+
+stage("Git CheckOut") {
+
+			git credentialsId: '5ff46fc5-0b41-4080-8c02-cc79b7df11bf', url: 'https://github.com/Nakshatra-Software/spring-boot-mongo-docker.git'
+
+			}
+
+stage ("build")
+{
+			def mavenHome =  tool name: "3.6.3"
+			def mavenCMD = "${mavenHome}/bin/mvn"
+			sh "${mavenCMD} clean package"
+}
+stage("Build Dokcer Image") {
+         sh "docker build -t kanisara/spring-boot-mongo-docker:1 ."
+    }
+   stage("Docker Push"){
+        withCredentials([string(credentialsId: 'Docker_Hub_Pwd', variable: 'Docker_Hub_Pwd')]) {
+          sh "docker login -u kanisara -p ${Docker_Hub_Pwd}"
+        }
+        sh "docker push kanisara/spring-boot-mongo-docker:1"
+        
+    }
+    
+   stage("Remove Local Image"){
+        sh "docker rmi -f kanisara/spring-boot-mongo-docker:1"
+    }
+	
+	  stage("deploy Image"){
+        sh "docker-compose up -d "
+    }
+	
+	
+}
